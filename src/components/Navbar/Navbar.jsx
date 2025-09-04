@@ -59,6 +59,13 @@ const Navbar = () => {
             Products
           </Link>
           <Link 
+            to="/umkm-support" 
+            className={`navbar-link ${isActive('/umkm-support') ? 'active' : ''}`}
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            UMKM Support
+          </Link>
+          <Link 
             to="/contact" 
             className={`navbar-link ${isActive('/contact') ? 'active' : ''}`}
             onClick={() => setIsMobileMenuOpen(false)}

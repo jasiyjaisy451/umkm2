@@ -9,6 +9,7 @@ import Products from './pages/Products/Products';
 import Contact from './pages/Contact/Contact';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
+import UMKMSupport from './pages/UMKMSupport/UMKMSupport';
 import UserDashboard from './pages/Dashboard/UserDashboard';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
@@ -25,6 +26,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/umkm-support" element={<UMKMSupport />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
