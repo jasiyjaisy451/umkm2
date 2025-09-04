@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useProducts } from '../../hooks/useProducts';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { uploadToCloudinary } from '../../services/cloudinary';
 import ProductForm from '../../components/ProductForm/ProductForm';
+import WebContentEditor from '../../components/WebContentEditor/WebContentEditor';
 import './Dashboard.css';
 
 const AdminDashboard = () => {
@@ -14,6 +14,39 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [webContent, setWebContent] = useState({
+    companyProfile: {
+      name: 'Stride',
+      tagline: 'Melangkah dengan Gaya',
+      description: 'Platform digitalisasi UMKM terdepan di Indonesia',
+      vision: 'Menjadi platform digitalisasi UMKM terdepan di Indonesia yang memberdayakan usaha kecil dan menengah untuk berkembang di era digital',
+      mission: [
+        'Menyediakan platform digital yang mudah digunakan untuk UMKM',
+        'Memberikan pelatihan dan pendampingan digitalisasi bisnis',
+        'Membangun ekosistem marketplace yang mendukung produk lokal'
+      ]
+    },
+    contactInfo: {
+      phone: '+62 895 0614 7763',
+      email: 'info@stride.co.id',
+      address: 'Jl. Raya Cikampak Cicadas, RT.1/RW.1, Cicadas, Kec. Ciampea, Kabupaten Bogor, Jawa Barat 16620',
+      whatsapp: '6289506147763'
+    },
+    advantages: [
+      {
+        title: 'Platform Terintegrasi',
+        description: 'Semua kebutuhan digitalisasi UMKM dalam satu platform yang mudah digunakan'
+      },
+      {
+        title: 'Dukungan 24/7',
+        description: 'Tim support yang siap membantu UMKM dalam proses digitalisasi'
+      },
+      {
+        title: 'Pelatihan Gratis',
+        description: 'Program pelatihan digital marketing dan e-commerce untuk semua mitra UMKM'
+      }
+    ]
+  });
   const [stats, setStats] = useState({
     totalProducts: 0,
     totalUsers: 0,
@@ -22,6 +55,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchUsers();
+    fetchWebContent();
     updateStats();
   }, [products]);
 
@@ -38,11 +72,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchWebContent = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'webContent');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        setWebContent(docSnap.data());
+      }
+    } catch (error) {
+      console.error('Error fetching web content:', error);
+    }
+  };
+
   const updateStats = () => {
     setStats({
       totalProducts: products.length,
       totalUsers: users.length,
-      totalOrders: 0 // This would come from orders collection
+      totalOrders: 0
     });
   };
 
@@ -86,6 +132,17 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSaveWebContent = async (contentData) => {
+    try {
+      await setDoc(doc(db, 'settings', 'webContent'), contentData);
+      setWebContent(contentData);
+      alert('Konten website berhasil diperbarui!');
+    } catch (error) {
+      console.error('Error saving web content:', error);
+      alert('Gagal menyimpan konten website');
+    }
+  };
+
   return (
     <div className="dashboard admin-dashboard">
       <div className="dashboard-container">
@@ -112,6 +169,13 @@ const AdminDashboard = () => {
               Kelola Produk
             </button>
             <button 
+              className={`nav-item ${activeTab === 'content' ? 'active' : ''}`}
+              onClick={() => setActiveTab('content')}
+            >
+              <span className="nav-icon">🌐</span>
+              Kelola Konten Web
+            </button>
+            <button 
               className={`nav-item ${activeTab === 'users' ? 'active' : ''}`}
               onClick={() => setActiveTab('users')}
             >
@@ -119,11 +183,11 @@ const AdminDashboard = () => {
               Kelola User
             </button>
             <button 
-              className={`nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
+              className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+              onClick={() => setActiveTab('analytics')}
             >
-              <span className="nav-icon">📦</span>
-              Pesanan
+              <span className="nav-icon">📈</span>
+              Analytics
             </button>
           </nav>
 
@@ -158,6 +222,13 @@ const AdminDashboard = () => {
                   <div className="stat-info">
                     <h3>{stats.totalOrders}</h3>
                     <p>Total Inquiry</p>
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-icon">🚀</div>
+                  <div className="stat-info">
+                    <h3>150+</h3>
+                    <p>UMKM Partner</p>
                   </div>
                 </div>
               </div>
@@ -223,6 +294,7 @@ const AdminDashboard = () => {
                         <h3>{product.name}</h3>
                         <p className="product-category">{product.category}</p>
                         <p className="product-price">{product.price}</p>
+                        <p className="product-stock">Stok: {product.stock}</p>
                       </div>
                       <div className="product-actions">
                         <button 
@@ -242,6 +314,17 @@ const AdminDashboard = () => {
                   ))}
                 </div>
               )}
+            </section>
+          )}
+
+          {/* Web Content Management Tab */}
+          {activeTab === 'content' && (
+            <section className="dashboard-section">
+              <h2>Kelola Konten Website</h2>
+              <WebContentEditor
+                content={webContent}
+                onSave={handleSaveWebContent}
+              />
             </section>
           )}
 
@@ -279,13 +362,33 @@ const AdminDashboard = () => {
             </section>
           )}
 
-          {/* Orders Tab */}
-          {activeTab === 'orders' && (
+          {/* Analytics Tab */}
+          {activeTab === 'analytics' && (
             <section className="dashboard-section">
-              <h2>Kelola Pesanan</h2>
-              <div className="empty-state">
-                <p>Fitur kelola pesanan akan segera hadir</p>
-                <span>Saat ini semua pesanan melalui WhatsApp</span>
+              <h2>Analytics & Insights</h2>
+              <div className="analytics-grid">
+                <div className="analytics-card">
+                  <h3>Performa UMKM</h3>
+                  <div className="metric">
+                    <span className="metric-value">89%</span>
+                    <span className="metric-label">UMKM Berhasil Go-Digital</span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric-value">300%</span>
+                    <span className="metric-label">Peningkatan Penjualan Rata-rata</span>
+                  </div>
+                </div>
+                <div className="analytics-card">
+                  <h3>Engagement</h3>
+                  <div className="metric">
+                    <span className="metric-value">4.8/5</span>
+                    <span className="metric-label">Rating Kepuasan</span>
+                  </div>
+                  <div className="metric">
+                    <span className="metric-value">1,200+</span>
+                    <span className="metric-label">Produk Terjual</span>
+                  </div>
+                </div>
               </div>
             </section>
           )}
